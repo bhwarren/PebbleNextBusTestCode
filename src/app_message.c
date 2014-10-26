@@ -7,8 +7,6 @@ Layer *window_layer;
 TextLayer *text_layer;
 
 static char* js_msg_recieved = "hold on..."; // default message on load
-
-static char r_nearby_datum[160];
 	
 // Key values for AppMessage Dictionary
 enum {
@@ -58,12 +56,12 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
 
 // Called when an incoming message from PebbleKitJS is dropped
 static void in_dropped_handler(AppMessageResult reason, void *context) {
-	send_nack_message();
+	//send_nack_message();
 }
 
 // Called when PebbleKitJS does not acknowledge receipt of a message
 static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
-	send_nack_message();
+	//send_nack_message();
 }
 
 void init(void) {

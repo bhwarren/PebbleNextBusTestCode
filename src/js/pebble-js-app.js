@@ -1,12 +1,14 @@
 // global array holding messages to be sent
 var bus_msg_que = [];
 
+var grabbed_data = false; // false until web scraping finishes
+
 // Function to send a message to the Pebble using AppMessage API
 function sendMessage() {
 	
 	var req = new XMLHttpRequest();
-	//req.open( "GET", "http://www.nextbus.com/webkit/predsByLoc.jsp?lat=35.910092&lon=-79.05321789999999&maxDis=23000&maxNumStops=999", true );
-	req.open( "GET", "http://152.23.22.74/", true );
+	req.open( "GET", "http://www.nextbus.com/webkit/predsByLoc.jsp?lat=35.910092&lon=-79.05321789999999&maxDis=23000&maxNumStops=999", true );
+	//req.open( "GET", "http://152.23.22.74/", true );
 	req.responseType = "document";
 	req.onload = function(e) {
 		if (req.readyState == 4 && req.status == 200) {
@@ -41,6 +43,9 @@ function sendMessage() {
 				}
 				currentNode = currentNode.nextElementSibling;
 			}
+			
+			grabbed_data = true;
+			
 		} else {
 			Pebble.sendAppMessage({"2": "Error connecting to server."});
 		}
@@ -59,6 +64,9 @@ function sendMessage() {
 }
 
 function sendMsg() {
+	if (grabbed_data === false) {
+		sendMessage();
+	}
 	if (bus_msg_que.length > 0) {
 		Pebble.sendAppMessage(bus_msg_que[0], sendNextMsg, sendMsg);
 	}
@@ -79,5 +87,6 @@ Pebble.addEventListener("ready", function(e) {
 // Called when incoming message from the Pebble is received
 Pebble.addEventListener("appmessage",
 							function(e) {
-								
-							});
+									sendMessage();
+								}
+							);
