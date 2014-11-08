@@ -8,7 +8,7 @@ function sendMessage() {
 	
 	var req = new XMLHttpRequest();
 	req.open( "GET", "http://www.nextbus.com/webkit/predsByLoc.jsp?lat=35.910092&lon=-79.05321789999999&maxDis=23000&maxNumStops=999", true );
-	//req.open( "GET", "http://152.23.22.74/", true );
+	//req.open( "GET", "http://192.168.1.144/", true );
 	req.responseType = "document";
 	req.onload = function(e) {
 		if (req.readyState == 4 && req.status == 200) {
