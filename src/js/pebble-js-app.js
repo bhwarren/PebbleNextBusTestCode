@@ -20,7 +20,7 @@ function sendMessage() {
 			var estimate;
 			var num_stops_recorded = 0;
 
-			while (currentNode && num_stops_recorded < 5) {
+			while (currentNode ){//&& num_stops_recorded < 5) {
 				if (currentNode.className == "inBetweenRouteSpacer") {
 					route = currentNode.childNodes[1].innerHTML;
 				} else if (currentNode.className == "link normalDirLinkColor" ||
@@ -45,6 +45,9 @@ function sendMessage() {
 			}
 			
 			grabbed_data = true;
+			
+			//tell the c part that we're done
+			bus_msg_que.push({"1":"done"});
 			
 		} else {
 			Pebble.sendAppMessage({"2": "Error connecting to server."});

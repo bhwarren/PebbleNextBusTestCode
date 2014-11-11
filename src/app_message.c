@@ -2,9 +2,8 @@
 
 #define NUM_MENU_SECTIONS 1
 #define NUM_FIRST_MENU_ITEMS 4
-
-#define NUM_NEARBY_BUSES 5
 #define NUM_NEARBY_MENU_SECTIONS 1
+#define MAX_SUPPORTED_BUSES 20
 	
 typedef struct {
   char* bus_route;
@@ -13,7 +12,10 @@ typedef struct {
 	char* arrival_time;
 } BusInfo;
 
-BusInfo nearby_buses[NUM_NEARBY_BUSES];
+int num_nearby_buses = 0;
+bool got_all_buses = false;
+
+BusInfo* nearby_buses;
 	
 Window *window;
 Window* nearby_buses_window;
@@ -45,8 +47,6 @@ static TextLayer* arrival_text_layer;
 
 
 //iterator used for populating the nearby_buses array
-int current_bus = 0;
-
 char* msg;
 
 
@@ -79,12 +79,14 @@ static uint16_t menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t secti
   if (section_index == 0) {
       return NUM_FIRST_MENU_ITEMS;
   }
-	return 0;
+	else{
+		return 0;
+	}
 }
 
 static uint16_t nearby_menu_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index, void *data) {
 	if (section_index == 0){
-		return NUM_NEARBY_BUSES;
+		return num_nearby_buses;
 	}
 	return 0;
 }
@@ -187,14 +189,24 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
 	//this is possible b/c it gets drawn only after it is added to the window
 	//get_buses_from_server();
 
-		APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", "b4 hide menulayer");
+	if(cell_index->section == 0) {
+		switch(cell_index->row){
+			case 0:
+				APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", "b4 hide menulayer");
 
-	//hide the main menu layer
-	layer_set_hidden((Layer *)menu_layer, true);
-		APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", "after hide menulayer, b4 push window");
+				//hide the main menu layer
+				layer_set_hidden((Layer *)menu_layer, true);
+				APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", "after hide menulayer, b4 push window");
 
-	//show the nearby buses
-	window_stack_push(nearby_buses_window, true);
+				//show the nearby buses
+				window_stack_push(nearby_buses_window, true);
+				break;
+			
+			default:
+				break;
+		}
+	}
+		
 }
 
 //Show all of the Bus info on the screen
@@ -290,35 +302,46 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
 	}
 	APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", msg);
 	
+	if(strcmp(msg, "done")==0){
+		got_all_buses = true;
+		send_ack_message();
+		return;
+	}
+	
 	int last_nl = 0;
 	int section = 0;
 	int i;
 	for(i=0;i<(int)strlen(msg); i++){
 		
+		//when find a newline, grab stuff between nls and put it in the array
 		if(msg[i]!='\n'){
 			continue;
 		}
 		
 		switch(section){
+			//define route section
 			case 0:
-				nearby_buses[current_bus].bus_route = malloc((i-last_nl+1)*sizeof(char));
-				strncpy(nearby_buses[current_bus].bus_route, msg+last_nl, i-last_nl);
-				nearby_buses[current_bus].bus_route[(i-last_nl)] = '\0';
+				nearby_buses[num_nearby_buses].bus_route = malloc((i-last_nl+1)*sizeof(char));
+				strncpy(nearby_buses[num_nearby_buses].bus_route, msg+last_nl, i-last_nl);
+				nearby_buses[num_nearby_buses].bus_route[(i-last_nl)] = '\0';
 				break;
+			//define direction section
 			case 1:
-				nearby_buses[current_bus].direction = malloc((i-last_nl+1)*sizeof(char));
-				strncpy(nearby_buses[current_bus].direction, msg+last_nl+1, i-last_nl);
-				nearby_buses[current_bus].direction[(i-last_nl)] = '\0';
+				nearby_buses[num_nearby_buses].direction = malloc((i-last_nl+1)*sizeof(char));
+				strncpy(nearby_buses[num_nearby_buses].direction, msg+last_nl+1, i-last_nl);
+				nearby_buses[num_nearby_buses].direction[(i-last_nl)] = '\0';
 				break;
+			//define stop section
 			case 2:
-				nearby_buses[current_bus].stop = malloc((i-last_nl+1)*sizeof(char));
-				strncpy(nearby_buses[current_bus].stop, msg+last_nl+1, i-last_nl);
-				nearby_buses[current_bus].stop[(i-last_nl)] = '\0';
+				nearby_buses[num_nearby_buses].stop = malloc((i-last_nl+1)*sizeof(char));
+				strncpy(nearby_buses[num_nearby_buses].stop, msg+last_nl+1, i-last_nl);
+				nearby_buses[num_nearby_buses].stop[(i-last_nl)] = '\0';
 				break;
+			//define arrival time section
 			case 3:
-				nearby_buses[current_bus].arrival_time = malloc((i-last_nl+1)*sizeof(char));
-				strncpy(nearby_buses[current_bus].arrival_time, msg+last_nl+1, i-last_nl);
-				nearby_buses[current_bus].arrival_time[(i-last_nl)] = '\0';
+				nearby_buses[num_nearby_buses].arrival_time = malloc((i-last_nl+1)*sizeof(char));
+				strncpy(nearby_buses[num_nearby_buses].arrival_time, msg+last_nl+1, i-last_nl);
+				nearby_buses[num_nearby_buses].arrival_time[(i-last_nl)] = '\0';
 				break;
 			
 		}
@@ -327,7 +350,7 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
 		
 	}
 	
-	current_bus++;
+	num_nearby_buses++;
 		//APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", "after getting msg");
 	//layer_add_child(window_layer, text_layer_get_layer(text_layer));
 	send_ack_message();
@@ -455,9 +478,12 @@ void bus_info_window_unload(){
 
 
 
-
+//----------------Startup and main/managerial stuff----------------------
 
 void init(void) {
+	
+	nearby_buses = malloc(sizeof(BusInfo)*MAX_SUPPORTED_BUSES);
+	
 	window = window_create();
 	nearby_buses_window = window_create();
 	bus_info_window = window_create();
@@ -504,13 +530,20 @@ void init(void) {
 }
 
 void deinit(void) {
+	
+	//check that we don't need to free individuals inside
+	free(nearby_buses);
+	
 	app_message_deregister_callbacks();
 	
 	text_layer_destroy(text_layer);
 	
-	window_destroy(window);
-	window_destroy(nearby_buses_window);
 	window_destroy(bus_info_window);
+	window_destroy(nearby_buses_window);
+	window_destroy(window);
+
+	
+	
 }
 
 int main( void ) {
