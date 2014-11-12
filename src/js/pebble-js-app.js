@@ -7,8 +7,14 @@ var grabbed_data = false; // false until web scraping finishes
 function sendMessage() {
 	
 	var req = new XMLHttpRequest();
-	req.open( "GET", "http://www.nextbus.com/webkit/predsByLoc.jsp?lat=35.910092&lon=-79.05321789999999&maxDis=23000&maxNumStops=999", true );
-	//req.open( "GET", "http://192.168.1.144/", true );
+	var lat = "35.910092";
+	var lon = "-79.05321789999999";
+	var url = "https://www.nextbus.com/webkit/predsByLoc.jsp?lat="+lat+"&"+"lon="+lon+
+							"&maxDis=2300&maxNumStops=99&accuracy=30&timestamp=1415743814265&"+
+							"caller=showPredsBasedOnLoc&moreStopsSelected=chapel-hill";
+							
+	//var url = "http://192.168.1.144/";
+	req.open( "GET", url, true );
 	req.responseType = "document";
 	req.onload = function(e) {
 		if (req.readyState == 4 && req.status == 200) {
@@ -20,10 +26,11 @@ function sendMessage() {
 			var estimate;
 			var num_stops_recorded = 0;
 
-			while (currentNode ){//&& num_stops_recorded < 5) {
+			while (currentNode && num_stops_recorded < 20) {
 				if (currentNode.className == "inBetweenRouteSpacer") {
 					route = currentNode.childNodes[1].innerHTML;
-				} else if (currentNode.className == "link normalDirLinkColor" ||
+				} 
+				else if (currentNode.className == "link normalDirLinkColor" ||
 							currentNode.className == "link altDirLinkColor") {
 					direction = currentNode.childNodes[1].childNodes[1].innerHTML;
 					stop = currentNode.childNodes[1].childNodes[3].data.trim().substr(6);
@@ -88,8 +95,8 @@ Pebble.addEventListener("ready", function(e) {
 	sendMessage();
 });												
 // Called when incoming message from the Pebble is received
-Pebble.addEventListener("appmessage",
-							function(e) {
+Pebble.addEventListener("appmessage",	
+								function(e) {
 									sendMessage();
 								}
 							);
