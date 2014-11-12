@@ -10,7 +10,7 @@ function sendMessage() {
 	var lat = "35.910092";
 	var lon = "-79.05321789999999";
 	var url = "https://www.nextbus.com/webkit/predsByLoc.jsp?lat="+lat+"&"+"lon="+lon+
-							"&maxDis=2300&maxNumStops=99&accuracy=30&timestamp=1415743814265&"+
+							"&maxDis=2300&maxNumStops=99&accuracy=30&"+
 							"caller=showPredsBasedOnLoc&moreStopsSelected=chapel-hill";
 							
 	//var url = "http://192.168.1.144/";

@@ -1,8 +1,5 @@
 #include "window_loaders.h"
 
-//flag to tell when done getting all buses
-bool got_all_buses = false;
-
 //temp var to store messages from the phone
 char* msg;
 
@@ -25,7 +22,7 @@ void send_ack_message(void){
 	dict_write_uint8(iter, STATUS_KEY, 0x1);
 	
 	dict_write_end(iter);
-  	app_message_outbox_send();
+  app_message_outbox_send();
 }
 
 // Write message to buffer & send
@@ -41,8 +38,8 @@ void send_nack_message(void){
 
 // Called when a message is received from PebbleKitJS
 static void in_received_handler(DictionaryIterator *received, void *context) {
-	Tuple *rec_debug = dict_find(received, DEBUG_KEY);
-	Tuple *rec_data = dict_find(received, DATA_KEY);
+	Tuple* rec_debug = dict_find(received, DEBUG_KEY);
+	Tuple* rec_data = dict_find(received, DATA_KEY);
 	
 	APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", "got msg");
 	
@@ -65,6 +62,17 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
 		free(msg);
 		got_all_buses = true;
 		send_ack_message();
+		
+		APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", "i'm done.  setting layer to hidden");
+		
+		//remove the loading screen from user's view
+		if(layer_get_hidden(text_layer_get_layer(loading_text_layer))==false){
+			layer_set_hidden(text_layer_get_layer(loading_text_layer), true);
+			menu_layer_reload_data(nearby_menu_layer);
+		}
+		
+		APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", "done setting layer to hidden");
+
 		return;
 	}
 	
@@ -134,6 +142,8 @@ static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reas
 //----------------Startup and main/managerial stuff----------------------
 
 void init(void) {
+
+	got_all_buses = false;
 	num_nearby_buses = 0;
 	
 	nearby_buses = malloc(sizeof(BusInfo)*MAX_SUPPORTED_BUSES);
@@ -162,9 +172,11 @@ void init(void) {
 	
 	window_stack_push(window, true);
 	
-	// initialize the only TextLayer
+	// initialize the TextLayer so can be referenced on multiple windows
 	window_layer = window_get_root_layer(window);
-	//GRect bounds = layer_get_frame(window_layer);
+	GRect bounds = layer_get_frame(window_layer);
+	loading_text_layer = text_layer_create(bounds);
+
 	//text_layer = text_layer_create((GRect){ .origin = { 0, 30 }, .size = bounds.size });
 	
 	// Register AppMessage handlers

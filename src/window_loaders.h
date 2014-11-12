@@ -36,6 +36,7 @@ Layer* info_window_layer;
 
 
 
+
 //--the UI stuff that the user actually interacts with--
 MenuLayer* menu_layer;
 MenuLayer* nearby_menu_layer;
@@ -47,6 +48,11 @@ TextLayer* direction_text_layer;
 TextLayer* arrival_text_layer;
 //static TextLayer* second_arrival_text_layer;
 
+TextLayer* loading_text_layer;
+
+
+//flag to tell when done getting all buses
+bool got_all_buses;
 
 //-----------------------function defs--------------------------------
 

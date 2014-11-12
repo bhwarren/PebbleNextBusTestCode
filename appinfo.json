@@ -6,13 +6,13 @@
     "capabilities": [
         ""
     ],
-    "companyName": "wbvaughan@steelerubber.com",
-    "longName": "Test02-js",
+    "companyName": "Vaughn and Warren Industries",
+    "longName": "ChapelHillBuses",
     "projectType": "native",
     "resources": {
         "media": []
     },
-    "shortName": "Test02-js",
+    "shortName": "ChapelHillBuses",
     "uuid": "06869fb2-b736-4899-aada-9cd9a1bcc2ef",
     "versionCode": 1,
     "versionLabel": "1.0",

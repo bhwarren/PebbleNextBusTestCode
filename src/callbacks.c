@@ -132,13 +132,11 @@ void menu_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index, void *da
 				//layer_set_hidden((Layer *)menu_layer, true);
 				APP_LOG(APP_LOG_LEVEL_DEBUG,"%s\n", "after hide menulayer, b4 push window");
 
-				if(num_nearby_buses>0){
-					//show the nearby buses
-					window_stack_push(nearby_buses_window, true);
+				window_stack_push(nearby_buses_window, true);
+				if(num_nearby_buses<0){
+					layer_set_hidden(text_layer_get_layer(loading_text_layer), false);
 				}
-				else{
-					//show a loading screen
-				}
+
 				break;
 			
 			default:
